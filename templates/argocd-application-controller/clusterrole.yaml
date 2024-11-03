@@ -1,0 +1,20 @@
+{{- $argo := (index .Values "argo-cd") -}}
+{{- if and .Values.nholuongut.createClusterRoles $argo.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "argo-cd.controller.fullname" . }}-{{ .Release.Namespace }}
+  labels:
+    {{- include "nholuongut.labels" (dict "context" . "component" .Values.controller.name "name" .Values.controller.name) | nindent 4 }}
+rules:
+  - apiGroups:
+    - '*'
+    resources:
+    - '*'
+    verbs:
+    - '*'
+  - nonResourceURLs:
+    - '*'
+    verbs:
+    - '*'
+{{- end }}

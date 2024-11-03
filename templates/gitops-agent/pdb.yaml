@@ -1,0 +1,27 @@
+{{- if .Values.agent.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Values.agent.name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.agent.name "name" .Values.agent.name) | nindent 4 }}
+    {{- with .Values.agent.pdb.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.agent.pdb.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- with .Values.agent.pdb.maxUnavailable }}
+  maxUnavailable: {{ . }}
+  {{- else }}
+  minAvailable: {{ .Values.agent.pdb.minAvailable | default 0 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "nholuongut.agentSelectorLabels" (dict "context" . "name" .Values.agent.name) | nindent 6 }}
+{{- end }}

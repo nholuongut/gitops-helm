@@ -1,0 +1,60 @@
+{{- if .Values.nholuongut.createClusterRoles }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "nholuongut.agentClusterName" . }}
+  labels:
+    {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.agent.name "name" .Values.agent.name) | nindent 4 }}
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - delete
+      - get
+      - patch
+      - watch
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/log
+    verbs:
+      - get
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - applications
+      - applicationsets
+      - appprojects
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+      - create
+      - patch
+      - delete
+  - apiGroups:
+      - batch
+    resources:
+      {{/* supports triggering jobs from UI */}}
+      - jobs
+    verbs:
+      - create
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - workflows
+    verbs:
+      {{/* supports triggering workflows from UI */}}
+      - create
+{{- end }}

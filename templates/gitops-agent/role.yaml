@@ -1,0 +1,88 @@
+{{- $argo := (index .Values "argo-cd") -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Values.agent.name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.agent.name "name" .Values.agent.name) | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - external-secrets.io
+  resources:
+    - externalsecrets
+  verbs:
+    - get
+    - list
+    - watch
+    - update
+    - patch
+    - delete
+    - create
+- apiGroups:
+    - generators.external-secrets.io
+  resources:
+    - gcraccesstokens
+    - ecrauthorizationtokens
+  verbs:
+    - get
+    - list
+    - watch
+    - update
+    - patch
+    - delete
+    - create
+- apiGroups:
+  - argoproj.io
+  resources:
+  - applications
+  {{- if $argo.applicationSet.enabled }}
+  - applicationsets
+  {{- end }}
+  - appprojects
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - delete
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  - pods
+  verbs:
+  - create
+  - list
+  - watch
+  - get
+{{- if eq (toString (index (coalesce $argo.server.config $argo.configs.cm) "exec.enabled")) "true" }}
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+{{- end }}
+- apiGroups:
+    - apps
+  resources:
+    - deployments
+  verbs:
+    - update
+    - patch

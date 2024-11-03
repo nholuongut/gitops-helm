@@ -1,0 +1,77 @@
+{{- if .Values.upgrader.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.agent.name }}-upgrader
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.upgrader.name "name" .Values.upgrader.name) | nindent 4 }}
+spec:
+  schedule: "{{ .Values.upgrader.cron }}"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: {{ .Values.upgrader.startDeadline }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Values.upgrader.name }}
+          containers:
+            - name: upgrader
+              image: {{ .Values.upgrader.image }}
+              imagePullPolicy: Always
+              envFrom:
+                - configMapRef:
+                    name: {{ .Values.agent.name }}-upgrader
+              env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+            {{- if .Values.agent.proxy.enabled }}
+                - name: HTTPS_PROXY
+                  value: {{ .Values.agent.proxy.httpsProxy }}
+                - name: HTTP_PROXY
+                  value: {{ .Values.agent.proxy.httpProxy }}
+                - name: NO_PROXY
+                  value: localhost,argocd-repo-server,argocd-redis,127.0.0.1,argocd-redis-ha-haproxy,kubernetes.default.svc,{{ .Values.agent.name }}
+            {{- end }}
+                - name: UPGRADER_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      key: GITOPS_AGENT_TOKEN
+                      name: gitops-agent
+              volumeMounts:
+                - name: mtls-certs
+                  mountPath: /etc/mtls
+                - name: config-volume
+                  mountPath: /etc/config
+                {{- if .Values.nholuongut.secrets.caData.enabled }}
+                - name: certvol
+                  mountPath: /ca-bundle/ca.bundle
+                  subPath: ca.bundle
+                {{- end }}
+          volumes:
+            - name: config-volume
+              configMap:
+                name: {{ .Values.agent.name }}-upgrader
+            {{- if .Values.nholuongut.secrets.caData.enabled }}
+            - name: certvol
+              secret:
+                secretName: {{ .Values.agent.name }}-ca
+                optional: true
+                items:
+                  - key: ca.bundle
+                    path: ca.bundle
+            {{- end }}
+            - name: mtls-certs
+              secret:
+                secretName: {{ .Values.agent.name }}-mtls
+                optional: true
+                items:
+                  - key: client.crt
+                    path: client.crt
+                  - key: client.key
+                    path: client.key
+          restartPolicy: Never
+---
+{{- end }}

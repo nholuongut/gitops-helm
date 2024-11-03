@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.agent.name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.agent.name "name" .Values.agent.name) | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Values.agent.name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ template "nholuongut.agent.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}

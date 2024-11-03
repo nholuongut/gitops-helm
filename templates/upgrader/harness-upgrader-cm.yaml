@@ -1,0 +1,31 @@
+{{- if .Values.upgrader.enabled }}
+apiVersion: v1
+data:
+  UPGRADER_GITOPS_ACCOUNT_IDENTIFIER: {{ .Values.nholuongut.identity.accountIdentifier }}
+  UPGRADER_GITOPS_AGENT_IDENTIFIER: {{ .Values.nholuongut.identity.agentIdentifier }}
+  {{- if ne .Values.nholuongut.identity.orgIdentifier "" }}
+  UPGRADER_GITOPS_ORG_IDENTIFIER: {{ .Values.nholuongut.identity.orgIdentifier }}
+  {{- end }}
+  {{- if ne .Values.nholuongut.identity.projectIdentifier "" }}
+  UPGRADER_GITOPS_PROJECT_IDENTIFIER: {{ .Values.nholuongut.identity.projectIdentifier }}
+  {{- end }}
+  UPGRADER_MODE: GitopsAgent
+  UPGRADER_NAMESPACE: {{ .Release.Namespace }}
+  UPGRADER_WORKLOAD_NAME: {{ .Values.agent.name }}
+  UPGRADER_CONTAINER_NAME: gitops-agent
+  {{- if .Values.nholuongut.configMap.http.mtls }}
+  UPGRADER_CLIENT_CERTIFICATE_FILE_PATH: {{ .Values.upgrader.config.clientCertificateFilePath }}
+  UPGRADER_CLIENT_CERTIFICATE_KEY_FILE_PATH: {{ .Values.upgrader.config.clientCertificateKeyFilePath }}
+  {{- end }}
+  {{- if ne .Values.upgrader.config.registryMirror "" }}
+  UPGRADER_REGISTRY_MIRROR: {{ .Values.upgrader.config.registryMirror }}
+  {{- end}}
+  UPGRADER_GITOPS_AGENT_HTTP_TARGET: {{ .Values.nholuongut.gitopsServerHost }}
+  UPGRADER_GITOPS_USE_V2: "true"
+  UPGRADER_GITOPS_ALL: "{{ .Values.upgrader.config.upgradeAll }}"
+kind: ConfigMap
+metadata:
+  name: {{ .Values.agent.name }}-upgrader
+  namespace: {{ .Release.Namespace | quote }}
+---
+{{- end }}

@@ -1,0 +1,47 @@
+{{- $argo := (index .Values "argo-cd") -}}
+{{- $redisHa := (index $argo "redis-ha") -}}
+apiVersion: v1
+data:
+  GITOPS_ACCOUNT_IDENTIFIER: {{ .Values.nholuongut.identity.accountIdentifier }}
+  GITOPS_AGENT_IDENTIFIER: {{ .Values.nholuongut.identity.agentIdentifier }}
+  {{- if ne .Values.nholuongut.identity.orgIdentifier "" }}
+  GITOPS_ORG_IDENTIFIER: {{ .Values.nholuongut.identity.orgIdentifier }}
+  {{- end }}
+  {{- if ne .Values.nholuongut.identity.projectIdentifier "" }}
+  GITOPS_PROJECT_IDENTIFIER: {{ .Values.nholuongut.identity.projectIdentifier }}
+  {{- end }}
+  {{- if .Values.nholuongut.disasterRecovery.enabled }}
+  GITOPS_DISASTER_RECOVERY_IDENTIFIER: {{ .Values.nholuongut.disasterRecovery.identifier }}
+  {{- end }}
+  GITOPS_SERVICE_HTTP_TLS_ENABLED: "{{ .Values.nholuongut.configMap.http.tlsEnabled }}"
+  GITOPS_SERVICE_HTTP_CERT_FILES: {{ .Values.nholuongut.configMap.http.certPath }}
+  GITOPS_SERVICE_MTLS_ENABLED: "{{ .Values.nholuongut.configMap.http.mtls }}"
+  GITOPS_SERVICE_HTTP_CLIENT_CERT: /etc/mtls/client.crt
+  GITOPS_SERVICE_HTTP_CLIENT_KEY: /etc/mtls/client.key
+  AGENT_HTTP_TARGET: {{ .Values.nholuongut.configMap.http.agentHttpTarget }}
+  GITOPS_SERVICE_PROTOCOL: {{ .Values.nholuongut.configMap.agentProtocol }}
+  GITOPS_AGENT_ENABLE_RECONCILE: "{{ .Values.nholuongut.configMap.reconcile.enabled }}"
+  GITOPS_AGENT_RECONCILE_INTERVAL: "{{ .Values.nholuongut.configMap.reconcile.interval }}"
+  GITOPS_AGENT_DISCOVER_APPLICATION_PODS_DURATION_IN_SECS: "{{ .Values.nholuongut.configMap.reconcile.podsDiscovery }}"
+  LOG_LEVEL: {{ .Values.nholuongut.configMap.logLevel }}
+  GITOPS_AGENT_FETCH_TYPE: "{{ .Values.nholuongut.configMap.agentFetchType }}"
+  GITOPS_ARGOCD_REPO: {{ .Values.nholuongut.configMap.argocd.repoServer }}
+  GITOPS_ARGOCD_REDIS: {{ .Values.nholuongut.configMap.argocd.redis }}
+  GITOPS_ARGOCD_REDIS_HA: {{ .Values.nholuongut.configMap.argocd.redisHa }}
+  GITOPS_ARGOCD_REDIS_HA_PROXY: {{ .Values.nholuongut.configMap.argocd.redisHaProxy }}
+  GITOPS_ARGOCD_APP_CONTROLLER: {{ .Values.nholuongut.configMap.argocd.controller }}
+  GITOPS_ARGOCD_APPSET_CONTROLLER: {{ .Values.nholuongut.configMap.argocd.applicationSet }}
+  GITOPS_AGENT_AVAILABILITY_MODE: {{ if .Values.agent.highAvailability }}HA{{ else }}NON-HA{{ end }}
+  ARGOCD_SERVER_REPO_SERVER: {{ if .Values.nholuongut.configMap.argocd.repoServerSvc }} {{ .Values.nholuongut.configMap.argocd.repoServerSvc }}:8081{{ else }}{{ .Values.nholuongut.configMap.argocd.repoServer }}:8081{{ end }}
+  {{-  if .Values.agent.proxy.enabled }}
+  HTTPS_PROXY: {{ .Values.agent.proxy.httpsProxy }}
+  HTTP_PROXY: {{ .Values.agent.proxy.httpProxy }}
+  NO_PROXY: localhost,argocd-repo-server,argocd-redis,127.0.0.1,argocd-redis-ha-haproxy,$(KUBERNETES_SERVICE_HOST),kubernetes.default.svc,{{ .Values.agent.name }}
+  {{- end }}
+  REDIS_SERVER: {{ include "redisServer" . }}:6379
+kind: ConfigMap
+metadata:
+  labels:
+      {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.agent.name "name" (printf "%s-cm" .Values.agent.name)) | nindent 4 }}
+  name: {{ .Values.agent.name }}
+  namespace: {{ .Release.Namespace }}

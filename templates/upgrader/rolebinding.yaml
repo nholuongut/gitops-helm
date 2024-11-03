@@ -1,0 +1,17 @@
+{{- if .Values.upgrader.enabled }}
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Values.upgrader.name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.upgrader.name "name" .Values.upgrader.name) | nindent 4 }}
+roleRef:
+  kind: Role
+  name: {{ .Values.upgrader.name }}
+  apiGroup: ""
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.upgrader.name }}
+    namespace: {{ .Release.Namespace | quote }}
+{{- end }}

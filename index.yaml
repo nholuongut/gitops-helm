@@ -1,0 +1,194 @@
+apiVersion: v1
+entries:
+  argo-cd:
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: changed
+          description: Bump argo-cd to v2.10.9
+      artifacthub.io/signKey: |
+        fingerprint: 2B8F22F57260EFA67BE1C5824B11F800CD9D2252
+        url: https://argoproj.github.io/argo-helm/pgp_keys.asc
+    apiVersion: v2
+    appVersion: v2.10.9
+    created: "2024-07-09T19:32:01.902481+02:00"
+    dependencies:
+    - condition: redis-ha.enabled
+      name: redis-ha
+      repository: https://dandydeveloper.github.io/charts/
+      version: 4.26.1
+    description: A Helm chart for Argo CD, a declarative, GitOps continuous delivery
+      tool for Kubernetes.
+    digest: 0fe91377dd73723bab624314f1dc60f59b49dfdcb71df43af9ecb15ce1b09f19
+    home: https://github.com/argoproj/argo-helm
+    icon: https://argo-cd.readthedocs.io/en/stable/assets/logo.png
+    keywords:
+    - argoproj
+    - argocd
+    - gitops
+    kubeVersion: '>=1.23.0-0'
+    maintainers:
+    - name: argoproj
+      url: https://argoproj.github.io/
+    name: argo-cd
+    sources:
+    - https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
+    - https://github.com/argoproj/argo-cd
+    urls:
+    - https://github.com/nholuongut/gitops-istio/charts/argo-cd-6.7.18.tgz
+    version: 6.7.18
+  gitops-helm:
+  - apiVersion: v2
+    created: "2024-09-24T12:11:07.224779+05:30"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 6.7.18
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: ceadc9d77b0c06b2c02d7fd2a8710b63fa6c5943fc7b32af5502a466b78bf65d
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.10.tgz
+    version: 1.1.10
+  - apiVersion: v2
+    created: "2024-07-09T19:32:01.999347+02:00"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 6.7.18
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: 784bed5378b7fabb5c622d831adc93eec6824b7bf2a89a8588d31a5a39cf10cd
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.9.tgz
+    version: 1.1.9
+  - apiVersion: v2
+    created: "2024-07-09T19:24:45.446239+02:00"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 5.53.1
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: 184fcf9410e8028dcc8de8a0d17df9c0f14bdf3c204ac5747e59d093b6540c42
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.8.tgz
+    version: 1.1.8
+  - apiVersion: v2
+    created: "2024-06-17T11:37:00.327756+02:00"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 5.53.1
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: 1cbce29646a6489b384b82fac1d3cbc976d819c89fe1dc56d194dc2daa6c2cad
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.7.tgz
+    version: 1.1.7
+  - apiVersion: v2
+    created: "2024-05-02T23:54:04.538864+05:30"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 5.53.1
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: 637b4cdefaeba5734743cecf503c578d3bd79b3036b84d22baba2045be955dc1
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.6.tgz
+    version: 1.1.6
+  - apiVersion: v2
+    created: "2024-05-02T23:54:04.531081+05:30"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 5.53.1
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: 2017798fb2fcf27eca114e9229455cd89a4c1a60a37a853720adc06513c1d625
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.5.tgz
+    version: 1.1.5
+  - apiVersion: v2
+    created: "2024-05-02T23:54:04.51603+05:30"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 5.53.1
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: bfa9c85650f4a25ba8e47f436cda166414c1c311ee2768c84271ef40afeef1f7
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.4.tgz
+    version: 1.1.4
+  - apiVersion: v2
+    created: "2024-05-02T23:54:04.507698+05:30"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 5.53.1
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: 061db9696e736a5e65b54086b4e5fb32907149bb5e2462c007760e6b3b9a7ddf
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.3.tgz
+    version: 1.1.3
+  - apiVersion: v2
+    created: "2024-05-02T23:54:04.499464+05:30"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 5.53.1
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: 5224c7166232f5b3b2852703b15c7968f2881b3d0281a2c57612cdf9a775d584
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.2.tgz
+    version: 1.1.2
+  - apiVersion: v2
+    created: "2024-05-02T23:54:04.489913+05:30"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 5.53.1
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: 41b9f1c112ca7bd7ec939c363420f2b91bb9f83f146a6a8246c9ebf94df234d7
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.1.tgz
+    version: 1.1.1
+  - apiVersion: v2
+    created: "2024-05-02T23:54:04.480609+05:30"
+    dependencies:
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 5.53.1
+    description: Install a Nho Luong GitOps Agent - for more information, please
+      visit https://github.com/nholuongut/gitops-istio.
+    digest: 3828e57541f89394d6f05ee655b7e75de2de786eedc5d4727be9dbf46d209b53
+    name: gitops-helm
+    urls:
+    - https://github.com/nholuongut/gitops-istio/releases/gitops-helm-1.1.0.tgz
+    version: 1.1.0
+generated: "2024-09-24T12:11:07.197168+05:30"

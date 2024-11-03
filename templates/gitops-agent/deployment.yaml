@@ -1,0 +1,264 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with (.Values.agent.deploymentAnnotations) }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  name: {{ .Values.agent.name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.agent.name "name" .Values.agent.name) | nindent 4 }}
+spec:
+  {{- if not .Values.agent.autoscaling.enabled }}
+  replicas: {{ .Values.agent.replicas }}
+  {{- end }}
+  revisionHistoryLimit: {{ .Values.global.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "nholuongut.agentSelectorLabels" (dict "context" . "name" .Values.agent.name) | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.agent.podAnnotations }}
+        {{- range $key, $value := . }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+      labels:
+        {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.agent.name "name" .Values.agent.name) | nindent 8 }}
+        {{- with .Values.agent.podLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.agent.imagePullSecrets | default .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.hostAliases }}
+      hostAliases:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.priorityClassName | default .Values.global.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- if .Values.agent.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.agent.terminationGracePeriodSeconds }}
+      {{- end }}
+      serviceAccountName: {{ .Values.agent.serviceAccount.name }}
+      containers:
+      - command:
+          - /app/agent
+            {{- with .Values.agent.logFormat }}
+            - --logformat
+            - {{ . | quote }}
+            {{- end }}
+            {{- with .Values.agent.logLevel }}
+            - --loglevel
+            - {{ . | quote }}
+            {{- end }}
+            {{- with .Values.agent.extraArgs }}
+              {{- toYaml . | nindent 8 }}
+            {{- end }}
+        name: {{ .Values.agent.name }}
+        image: {{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag }}
+        imagePullPolicy: {{ .Values.agent.image.imagePullPolicy }}
+        envFrom:
+          - configMapRef:
+              name: {{ .Values.agent.name }}
+          - secretRef:
+              name: {{ .Values.agent.name }}
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: REDIS_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ default "argocd-redis" .Values.externalRedis.existingSecret }}
+                key: redis-username
+                optional: true
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ default "argocd-redis" .Values.externalRedis.existingSecret }}
+                optional: true
+                {{- if .Values.externalRedis.host }}
+                key: redis-password
+                {{- else }}
+                key: auth
+                {{- end }}
+          - name: REDIS_SENTINEL_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ $argo := (index .Values "argo-cd") }}
+                {{- if $argo.enabled -}}
+                {{ default (include "argo-cd.redis.fullname" .) .Values.externalRedis.existingSecret }}
+                {{- else -}}
+                {{ default "redis-sentinel-username" .Values.externalRedis.existingSecret }}
+                {{- end }}
+                key: redis-sentinel-username
+                optional: true
+          - name: REDIS_SENTINEL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ $argo := (index .Values "argo-cd") }}
+                {{- if $argo.enabled -}}
+                {{ default (include "argo-cd.redis.fullname" .) .Values.externalRedis.existingSecret }}
+                {{- else -}}
+                {{ default "redis-sentinel-password" .Values.externalRedis.existingSecret }}
+                {{- end }}
+                key: redis-sentinel-password
+                optional: true
+        volumeMounts:
+        {{- with .Values.agent.volumeMounts }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        - mountPath: /app/config/ssh
+          name: ssh-known-hosts
+        - mountPath: /app/config/tls
+          name: tls-certs
+        - mountPath: /app/config/server/tls
+          name: argocd-repo-server-tls
+        - mountPath: /home/argocd
+          name: plugins-home
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /etc/mtls
+          name: mtls-certs
+        {{- if .Values.nholuongut.secrets.caData.enabled }}
+        - mountPath: /tmp/ca.bundle
+          name: certvol
+          subPath: ca.bundle
+        {{- end }}
+        - mountPath: /app/logs
+          name: log-volume
+        startupProbe:
+          exec:
+            command:
+              - test
+              - -s
+              - logs/agent.log
+          initialDelaySeconds: {{ .Values.agent.startupProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.agent.startupProbe.periodSeconds }}
+          failureThreshold: {{ .Values.agent.startupProbe.failureThreshold }}
+        livenessProbe:
+          httpGet:
+            path: /healthz?full=true
+            port: 8090
+          initialDelaySeconds: {{ .Values.agent.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.agent.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.agent.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.agent.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.agent.livenessProbe.failureThreshold }}
+        ports:
+        - containerPort: 2112
+          name: metrics
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8090
+          initialDelaySeconds: {{ .Values.agent.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.agent.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.agent.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.agent.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.agent.readinessProbe.failureThreshold }}
+        resources:
+          {{- toYaml .Values.agent.resources | nindent 10 }}
+        {{- with .Values.agent.containerSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.agent.lifecycle }}
+        lifecycle:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.agent.extraContainers }}
+        {{- tpl (toYaml .) $ | nindent 6 }}
+      {{- end }}
+      {{- with .Values.agent.initContainers }}
+      initContainers:
+        {{- tpl (toYaml .) $ | nindent 6 }}
+      {{- end }}
+      {{- with .Values.agent.nodeSelector | default .Values.global.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.tolerations | default .Values.global.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.topologySpreadConstraints | default .Values.global.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- range $constraint := . }}
+      - {{ toYaml $constraint | nindent 8 | trim }}
+        {{- if not $constraint.labelSelector }}
+        labelSelector:
+          matchLabels:
+            {{- include "nholuongut.selectorLabels" (dict "context" $ "name" $.Values.agent.name) | nindent 12 }}
+        {{- end }}
+        {{- end }}
+      {{- end }}
+      volumes:
+      {{- with .Values.agent.volumes }}
+        {{- toYaml . | nindent 6}}
+      {{- end }}
+      - name: plugins-home
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      - name: ssh-known-hosts
+        configMap:
+          name: argocd-ssh-known-hosts-cm
+          defaultMode: 420
+      - name: tls-certs
+        configMap:
+          name: argocd-tls-certs-cm
+          defaultMode: 420
+      - name: argocd-repo-server-tls
+        secret:
+          secretName: argocd-repo-server-tls
+          optional: true
+          items:
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
+          - key: ca.crt
+            path: ca.crt
+      - name: mtls-certs
+        secret:
+          secretName: {{ .Values.agent.name }}-mtls
+          optional: true
+          items:
+          - key: client.crt
+            path: client.crt
+          - key: client.key
+            path: client.key
+      {{ if .Values.nholuongut.secrets.caData.enabled }}
+      - name: certvol
+        secret:
+          secretName: {{ .Values.agent.name }}-ca
+          optional: true
+          items:
+            - key: ca.bundle
+              path: ca.bundle
+      {{- end }}
+      - name: log-volume
+        emptyDir: { }
+      {{- if .Values.agent.hostNetwork }}
+      hostNetwork: {{ .Values.agent.hostNetwork }}
+      {{- end }}
+      {{- with .Values.agent.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      dnsPolicy: {{ .Values.agent.dnsPolicy }}

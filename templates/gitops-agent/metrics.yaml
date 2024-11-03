@@ -1,0 +1,34 @@
+{{- if .Values.agent.metrics.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.agent.name }}-metrics
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.agent.name "name" (printf "%s-metrics" .Values.agent.name)) | nindent 4 }}
+    {{- with .Values.agent.metrics.service.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.agent.metrics.service.annotations .Values.agent.addPrometheusAnnotations }}
+  annotations:
+    {{- if .Values.agent.addPrometheusAnnotations }}
+    prometheus.io/port: {{ .Values.agent.metrics.service.servicePort | quote }}
+    prometheus.io/scrape: "true"
+    {{- end }}
+    {{- range $key, $value := .Values.agent.metrics.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.agent.metrics.service.type }}
+  {{- if and .Values.agent.metrics.service.clusterIP (eq .Values.agent.metrics.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.agent.metrics.service.clusterIP }}
+  {{- end }}
+  ports:
+  - name: {{ .Values.agent.metrics.service.portName }}
+    protocol: TCP
+    port: {{ .Values.agent.metrics.service.servicePort }}
+    targetPort: metrics
+  selector:
+    {{- include "nholuongut.agentSelectorLabels" (dict "context" . "name" .Values.agent.name) | nindent 4 }}
+{{- end }}

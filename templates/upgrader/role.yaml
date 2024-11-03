@@ -1,0 +1,35 @@
+{{- if .Values.upgrader.enabled }}
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Values.upgrader.name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "nholuongut.agentLabels" (dict "context" . "component" .Values.upgrader.name "name" .Values.upgrader.name) | nindent 4 }}
+rules:
+  - apiGroups:
+    - batch
+    - apps
+    - extensions
+    resources:
+    - cronjobs
+    verbs:
+    - get
+    - list
+    - watch
+    - update
+    - patch
+  - apiGroups:
+    - extensions
+    - apps
+    resources:
+    - deployments
+    - statefulsets
+    verbs:
+    - get
+    - list
+    - watch
+    - create
+    - update
+    - patch
+{{- end }}
